@@ -27,9 +27,9 @@ export function ChatPanel({ id, title, input, setInput }: ChatPanelProps) {
 
   const exampleMessages = [
     {
-      heading: 'What are the',
-      subheading: 'trending memecoins today?',
-      message: `What are the trending memecoins today?`
+      heading: 'How do you code',
+      subheading: 'fibonacci in Python?',
+      message: `How do you code fibonacci in Python?`
     },
     {
       heading: 'What is the price of',
