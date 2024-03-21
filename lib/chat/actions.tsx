@@ -21,6 +21,8 @@ import {
 
 import { z } from 'zod'
 import { Events } from '@/components/stocks/events'
+import { StocksSkeleton } from '@/components/stocks/stocks-skeleton'
+import { Stocks } from '@/components/stocks/stocks'
 import {
   formatNumber,
   runAsyncFnWithoutBlocking,
@@ -120,7 +122,7 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string) {
+async function submitUserMessage(content: string, chatId: string) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
@@ -167,9 +169,7 @@ async function submitUserMessage(content: string) {
     text: ({ content, done, delta }) => {
       if (!textStream) {
         textStream = createStreamableValue('')
-        textNode = (
-          <CodeBlock language="python" value={textStream.value.curr!} />
-        )
+        textNode = <BotMessage content={textStream.value} />
       }
 
       if (done) {
@@ -186,12 +186,7 @@ async function submitUserMessage(content: string) {
           ]
         })
       } else {
-        // Ensure new lines are properly handled by replacing '\n' with line breaks in the UI
-        const updatedContent =
-          textStream.value.curr! + delta.replace(/\\n/g, '\n')
-        textStream.update(updatedContent)
-        console.log(updatedContent)
-        textNode = <CodeBlock language="python" value={updatedContent} />
+        textStream.update(delta)
       }
 
       return textNode
