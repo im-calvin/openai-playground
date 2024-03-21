@@ -1,5 +1,6 @@
 import { Sandbox, CodeInterpreterV2 } from 'e2b'
 import { ChatCompletionTool } from 'openai/resources'
+import { kv } from '@vercel/kv'
 
 // example
 const functions: ChatCompletionTool[] = [
@@ -23,23 +24,36 @@ const functions: ChatCompletionTool[] = [
   }
 ]
 
-export async function executePythonCode(code: string) {
-  const sandbox = await Sandbox.create({
-    template: 'kelvin-sandbox',
+// returns old sandboxId if the sandbox was created previously for this chat otherwise creates a new sandbox for this chat
+export async function initSandbox(chatId: string): Promise<string> {
+  let sandboxId = await kv.get(chatId)
+  if (sandboxId) {
+    return sandboxId as string
+  }
+  const sandbox = await CodeInterpreterV2.create({
     apiKey: process.env.E2B_API_KEY
+    // could potentially attach userId here
+    // metadata: {
+    //   userId: userId
+    // }
   })
 
-  await sandbox.filesystem.write('/code.py', code)
+  await sandbox.keepAlive(59 * 60 * 1000) // keep sandbox alive for 59 minutes
 
-  const codepy = await sandbox.process.start({
-    cmd: 'python3 /code.py'
-  })
-  await codepy.wait()
+  // consider cleanup with a setTimeout?
 
-  const stdout = codepy.output.stdout
-  const stderr = codepy.output.stderr
+  await kv.set(chatId, sandbox.id)
+  return sandbox.id
+}
 
-  sandbox.close()
+// TODO implement a cleanup function
 
-  return { stdout, stderr }
+export async function executePythonCode(
+  code: string,
+  sandboxId: string
+): Promise<{ stdout: string[]; stderr: string[] }> {
+  const sandbox = await CodeInterpreterV2.reconnect(sandboxId)
+  const result = await sandbox.execPython(code)
+
+  return { stdout: result.stdout, stderr: result.stderr }
 }

@@ -14,15 +14,12 @@ import {
   spinner,
   BotCard,
   BotMessage,
-  SystemMessage,
-  Stock,
-  Purchase
+  SystemMessage
 } from '@/components/stocks'
 
+import { Separator } from '@/components/ui/separator'
+
 import { z } from 'zod'
-import { Events } from '@/components/stocks/events'
-import { StocksSkeleton } from '@/components/stocks/stocks-skeleton'
-import { Stocks } from '@/components/stocks/stocks'
 import {
   formatNumber,
   runAsyncFnWithoutBlocking,
@@ -34,7 +31,7 @@ import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat } from '@/lib/types'
 import { auth } from '@/auth'
 
-import { executePythonCode } from '@/lib/e2b'
+import { executePythonCode, initSandbox } from '@/lib/e2b'
 import { CodeBlock } from '@/components/ui/codeblock'
 
 const openai = new OpenAI({
@@ -122,10 +119,11 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string, chatId: string) {
+async function submitUserMessage(content: string) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
+  const sandboxId = await initSandbox(aiState.get().chatId)
 
   aiState.update({
     ...aiState.get(),
@@ -151,21 +149,15 @@ async function submitUserMessage(content: string, chatId: string) {
         role: 'system',
         content: `You are a senior developer that can code in Python. Always produce valid JSON.`
       },
-      {
-        // expected behaviour from openai
-        role: 'user',
-        content: 'Write hello world'
-      },
-      {
-        role: 'assistant',
-        content: '{"code": "print("hello world")"}'
-      },
       ...aiState.get().messages.map((message: any) => ({
         role: message.role,
         content: message.content,
         name: message.name
       }))
     ],
+    // `text` is called when an AI returns a text response (as opposed to a tool call).
+    // Its content is streamed from the LLM, so this function will be called
+    // multiple times with `content` being incremental.
     text: ({ content, done, delta }) => {
       if (!textStream) {
         textStream = createStreamableValue('')
@@ -191,13 +183,15 @@ async function submitUserMessage(content: string, chatId: string) {
 
       return textNode
     },
-    functions: {
+    tools: {
       execCode: {
         description:
           'Executes the passed Python code using Python and returns the stdout and stderr.',
-        parameters: z.object({
-          code: z.string().describe('The Python code to execute.')
-        }),
+        parameters: z
+          .object({
+            code: z.string().describe('The Python code to execute.')
+          })
+          .required(),
         render: async function* ({ code }) {
           yield (
             <BotCard>
@@ -205,7 +199,7 @@ async function submitUserMessage(content: string, chatId: string) {
             </BotCard>
           )
 
-          const { stdout, stderr } = await executePythonCode(code)
+          const { stdout, stderr } = await executePythonCode(code, sandboxId)
 
           aiState.done({
             ...aiState.get(),
@@ -226,11 +220,13 @@ async function submitUserMessage(content: string, chatId: string) {
             ]
           })
 
+          // what to render when the tool is done
           return (
             <>
               <BotCard>
                 <CodeBlock language="python" value={code} />
               </BotCard>
+              <Separator className="my-4" />
               <BotCard>{stdout}</BotCard>
             </>
           )
@@ -267,7 +263,10 @@ export const AI = createAI<AIState, UIState>({
     submitUserMessage
   },
   initialUIState: [],
-  initialAIState: { chatId: nanoid(), messages: [] },
+  initialAIState: {
+    chatId: nanoid(),
+    messages: []
+  },
   unstable_onGetUIState: async () => {
     'use server'
 
@@ -290,6 +289,7 @@ export const AI = createAI<AIState, UIState>({
     const session = await auth()
 
     if (session && session.user) {
+      // save chat
       const { chatId, messages } = state
 
       const createdAt = new Date()
