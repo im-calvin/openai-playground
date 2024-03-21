@@ -35,7 +35,7 @@ import { executePythonCode, initSandbox } from '@/lib/e2b'
 import { CodeBlock } from '@/components/ui/codeblock'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || ''
+  apiKey: process.env.OPENAI_API_KEY
 })
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
@@ -147,7 +147,10 @@ async function submitUserMessage(content: string) {
     messages: [
       {
         role: 'system',
-        content: `You are a senior developer that can code in Python. Always produce valid JSON.`
+        content: `You are a code interpreter bot that can only code in Python.
+        
+        If the user requests to execute code, call \` exec_code \` function to show the output.
+        `
       },
       ...aiState.get().messages.map((message: any) => ({
         role: message.role,
@@ -183,7 +186,7 @@ async function submitUserMessage(content: string) {
 
       return textNode
     },
-    tools: {
+    functions: {
       execCode: {
         description:
           'Executes the passed Python code using Python and returns the stdout and stderr.',
@@ -194,12 +197,22 @@ async function submitUserMessage(content: string) {
           .required(),
         render: async function* ({ code }) {
           yield (
+            // what to render while waiting for the code
             <BotCard>
               <SystemMessage>Executing code...</SystemMessage>
             </BotCard>
           )
 
-          const { stdout, stderr } = await executePythonCode(code, sandboxId)
+          // TODO stream the output of execPython
+          if (!textStream) {
+            textStream = createStreamableValue('')
+          }
+
+          const { stdout, stderr } = await executePythonCode(
+            code,
+            sandboxId,
+            textStream
+          )
 
           aiState.done({
             ...aiState.get(),

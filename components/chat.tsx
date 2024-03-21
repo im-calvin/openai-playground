@@ -26,7 +26,6 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
   const [input, setInput] = useState('')
   const [messages] = useUIState()
   const [aiState] = useAIState()
-  const isLoading = true
 
   const [_, setNewChatId] = useLocalStorage('newChatId', id)
 

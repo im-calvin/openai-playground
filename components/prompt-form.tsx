@@ -16,18 +16,21 @@ import {
 } from '@/components/ui/tooltip'
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
-import { useRouter } from 'next/navigation'
+import { insertFile } from '@/lib/e2b'
+import { fetcher } from '@/lib/utils'
 
 export function PromptForm({
   input,
-  setInput
+  setInput,
+  id
 }: {
   input: string
   setInput: (value: string) => void
+  id: string
 }) {
-  const router = useRouter()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
@@ -36,6 +39,27 @@ export function PromptForm({
       inputRef.current.focus()
     }
   }, [])
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target.files
+    if (files && files.length > 0) {
+      // upload files[0]
+      const file = files[0]
+      const json = await fetcher('/api/chat/insertFile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chatId: id,
+          fileName: file.name,
+          fileContents: await file.text()
+        })
+      })
+    }
+  }
 
   return (
     <form
@@ -67,6 +91,12 @@ export function PromptForm({
       }}
     >
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden" // Hide the file input
+          onChange={handleFileChange} // Step 3: Handle file selection
+        />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -74,14 +104,14 @@ export function PromptForm({
               size="icon"
               className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
               onClick={() => {
-                router.push('/new')
+                fileInputRef.current?.click()
               }}
             >
               <IconPlus />
-              <span className="sr-only">New Chat</span>
+              <span className="sr-only">Upload File</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>New Chat</TooltipContent>
+          <TooltipContent>Upload File</TooltipContent>
         </Tooltip>
         <Textarea
           ref={inputRef}

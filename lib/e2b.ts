@@ -1,6 +1,7 @@
 import { Sandbox, CodeInterpreterV2 } from 'e2b'
 import { ChatCompletionTool } from 'openai/resources'
 import { kv } from '@vercel/kv'
+import { StreamableValue, createStreamableValue } from 'ai/rsc'
 
 // example
 const functions: ChatCompletionTool[] = [
@@ -46,14 +47,41 @@ export async function initSandbox(chatId: string): Promise<string> {
   return sandbox.id
 }
 
+export async function insertFile(
+  chatId: string,
+  fileName: string,
+  fileContents: string
+) {
+  // search for sandboxId with chatId
+  let sandboxId = await kv.get<string>(chatId)
+  if (!sandboxId) {
+    throw new Error(`SandboxId not found with chatId: ${chatId}`)
+  } else if (typeof sandboxId !== 'string') {
+    throw new Error(`SandboxId not of type string`)
+  }
+  const sandbox = await Sandbox.reconnect(sandboxId)
+  await sandbox.filesystem.write(fileName, fileContents)
+}
+
 // TODO implement a cleanup function
 
 export async function executePythonCode(
   code: string,
-  sandboxId: string
+  sandboxId: string,
+  textStream: ReturnType<typeof createStreamableValue<string>>
 ): Promise<{ stdout: string[]; stderr: string[] }> {
+  console.log('executing code with sandboxId: ', sandboxId)
   const sandbox = await CodeInterpreterV2.reconnect(sandboxId)
-  const result = await sandbox.execPython(code)
+  const result = await sandbox.execPython(
+    code,
+    out => {
+      textStream.update(out.line)
+    },
+    err => {
+      textStream.update(err.line)
+    }
+  )
+  // TODO: stream the output of the execPython
 
   return { stdout: result.stdout, stderr: result.stderr }
 }
