@@ -16,9 +16,7 @@ import {
 } from '@/components/ui/tooltip'
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
-import { insertFile } from '@/lib/e2b'
-import { fetcher } from '@/lib/utils'
-import { toast } from 'sonner'
+import { FileUploadButton } from '@/components/file-upload-button'
 
 export function PromptForm({
   input,
@@ -27,7 +25,7 @@ export function PromptForm({
 }: {
   input: string
   setInput: (value: string) => void
-  id: string
+  id?: string
 }) {
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
@@ -40,29 +38,6 @@ export function PromptForm({
       inputRef.current.focus()
     }
   }, [])
-
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = event.target.files
-    if (files && files.length > 0) {
-      // upload files[0]
-      const file = files[0]
-      // fetcher guarantees that json is success
-      const json = await fetcher('/api/chat/insertFile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chatId: id,
-          fileName: file.name,
-          fileContents: await file.text()
-        })
-      })
-      toast.success(`File ${file.name} uploaded successfully`)
-    }
-  }
 
   return (
     <form
@@ -94,28 +69,7 @@ export function PromptForm({
       }}
     >
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden" // Hide the file input
-          onChange={handleFileChange} // Step 3: Handle file selection
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                fileInputRef.current?.click()
-              }}
-            >
-              <IconPlus />
-              <span className="sr-only">Upload File</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Upload File</TooltipContent>
-        </Tooltip>
+        <FileUploadButton chatId={id} />
         <Textarea
           ref={inputRef}
           tabIndex={0}
