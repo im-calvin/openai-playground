@@ -12,9 +12,8 @@ export async function POST(req: Request): Promise<Response> {
       )
     }
 
-    // Assuming fileContents is a base64 encoded string of the file's contents
-    const fileBlob = Buffer.from(fileContents, 'base64')
-    await insertFile(chatId, fileName, fileBlob.toString('utf-8'))
+    // fileContents is utf-8 encoded string
+    await insertFile(chatId, fileName, fileContents)
 
     return new Response(
       JSON.stringify({ message: 'File inserted successfully' }),

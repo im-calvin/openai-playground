@@ -1,7 +1,7 @@
 import { Sandbox, CodeInterpreterV2 } from 'e2b'
 import { ChatCompletionTool } from 'openai/resources'
 import { kv } from '@vercel/kv'
-import { StreamableValue, createStreamableValue } from 'ai/rsc'
+import { StreamableValue, createStreamableValue, getAIState } from 'ai/rsc'
 
 // example
 const functions: ChatCompletionTool[] = [
@@ -70,18 +70,11 @@ export async function executePythonCode(
   sandboxId: string,
   textStream: ReturnType<typeof createStreamableValue<string>>
 ): Promise<{ stdout: string[]; stderr: string[] }> {
-  console.log('executing code with sandboxId: ', sandboxId)
   const sandbox = await CodeInterpreterV2.reconnect(sandboxId)
-  const result = await sandbox.execPython(
-    code,
-    out => {
-      textStream.update(out.line)
-    },
-    err => {
-      textStream.update(err.line)
-    }
-  )
+  const result = await sandbox.execPython(code) // the code has to 'print' something
   // TODO: stream the output of the execPython
+  // maybe the solution is to call aiState.update()
+  // or https://sdk.vercel.ai/docs/guides/providers/openai-functions
 
   return { stdout: result.stdout, stderr: result.stderr }
 }

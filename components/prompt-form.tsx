@@ -18,6 +18,7 @@ import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { insertFile } from '@/lib/e2b'
 import { fetcher } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export function PromptForm({
   input,
@@ -47,6 +48,7 @@ export function PromptForm({
     if (files && files.length > 0) {
       // upload files[0]
       const file = files[0]
+      // fetcher guarantees that json is success
       const json = await fetcher('/api/chat/insertFile', {
         method: 'POST',
         headers: {
@@ -58,6 +60,7 @@ export function PromptForm({
           fileContents: await file.text()
         })
       })
+      toast.success(`File ${file.name} uploaded successfully`)
     }
   }
 

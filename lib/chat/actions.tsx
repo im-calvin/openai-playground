@@ -147,7 +147,7 @@ async function submitUserMessage(content: string) {
     messages: [
       {
         role: 'system',
-        content: `You are a code interpreter bot that can only code in Python.
+        content: `You are a code interpreter bot that can only code in Python. Make sure to print the output of your code.
         
         If the user requests to execute code, call \` exec_code \` function to show the output.
         `
