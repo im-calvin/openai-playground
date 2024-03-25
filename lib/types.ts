@@ -40,4 +40,5 @@ export interface File {
   id: string
   name: string
   contents: string
+  selected: boolean
 }

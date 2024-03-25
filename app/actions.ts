@@ -18,7 +18,8 @@ export async function getUploadedFiles(userId: string): Promise<File[]> {
     return {
       id: file.id,
       name: file.name,
-      contents: file.contents
+      contents: file.contents,
+      selected: file.selected
     }
   })
   return files

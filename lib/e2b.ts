@@ -47,7 +47,7 @@ export async function initSandbox(chatId: string): Promise<string> {
   return sandbox.id
 }
 
-export async function insertFile(
+export async function insertFileIntoSandbox(
   chatId: string,
   fileName: string,
   fileContents: string

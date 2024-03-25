@@ -17,7 +17,6 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { FileUploadButton } from '@/components/file-upload-button'
-import { useParams } from 'next/navigation'
 
 export function PromptForm({
   input,

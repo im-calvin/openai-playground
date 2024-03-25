@@ -10,8 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import { fetcher } from '@/lib/utils'
 import { toast } from 'sonner'
-import { useAIState } from 'ai/rsc'
-import { AIState } from '@/lib/chat/actions'
+import { useUploadedFilesContext } from '@/lib/file-upload-context'
 
 interface FileUploadButtonProps {
   userId?: string
@@ -19,7 +18,7 @@ interface FileUploadButtonProps {
 
 export function FileUploadButton({ userId }: FileUploadButtonProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const [aiState] = useAIState() as [AIState, unknown]
+  const { addUploadedFile, setRefetchFiles } = useUploadedFilesContext()
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -27,48 +26,48 @@ export function FileUploadButton({ userId }: FileUploadButtonProps) {
     const files = event.target.files
     if (files && files.length > 0) {
       const file = files[0]
-      const json = await fetcher('/api/chat/insertFile', {
+      const fileContents = await file.text()
+      const json = await fetcher('/api/user/uploadFile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          chatId: aiState.chatId,
           fileName: file.name,
-          fileContents: await file.text(),
+          fileContents,
           userId
         })
       })
       toast.success(`File ${file.name} uploaded successfully`)
+
+      setRefetchFiles(true)
     }
   }
 
   return (
     <>
-      <>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                fileInputRef.current?.click()
-              }}
-            >
-              <IconPlus />
-              <span className="sr-only">Upload File</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Upload File</TooltipContent>
-        </Tooltip>
-      </>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+            onClick={() => {
+              fileInputRef.current?.click()
+            }}
+          >
+            <IconPlus />
+            <span className="sr-only">Upload File</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Upload File</TooltipContent>
+      </Tooltip>
     </>
   )
 }
