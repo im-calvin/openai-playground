@@ -30,8 +30,13 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat } from '@/lib/types'
 import { auth } from '@/auth'
+import { getUploadedFiles } from '@/app/actions'
 
-import { executePythonCode, initSandbox } from '@/lib/e2b'
+import {
+  executePythonCode,
+  initSandbox,
+  insertFileIntoSandbox
+} from '@/lib/e2b'
 import { CodeBlock } from '@/components/ui/codeblock'
 
 const openai = new OpenAI({
@@ -119,11 +124,17 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string) {
+async function submitUserMessage(content: string, userId: string) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
+  const files = await getUploadedFiles(userId)
   const sandboxId = await initSandbox(aiState.get().chatId)
+  await Promise.all(
+    files.map(file =>
+      insertFileIntoSandbox(sandboxId, file.name, file.contents)
+    )
+  )
 
   aiState.update({
     ...aiState.get(),

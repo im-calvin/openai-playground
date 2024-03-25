@@ -48,17 +48,10 @@ export async function initSandbox(chatId: string): Promise<string> {
 }
 
 export async function insertFileIntoSandbox(
-  chatId: string,
+  sandboxId: string,
   fileName: string,
   fileContents: string
 ) {
-  // search for sandboxId with chatId
-  let sandboxId = await kv.get<string>(chatId)
-  if (!sandboxId) {
-    throw new Error(`SandboxId not found with chatId: ${chatId}`)
-  } else if (typeof sandboxId !== 'string') {
-    throw new Error(`SandboxId not of type string`)
-  }
   const sandbox = await Sandbox.reconnect(sandboxId)
   await sandbox.filesystem.write(fileName, fileContents)
 }
