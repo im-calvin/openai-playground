@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { IconPlus } from '@/components/ui/icons'
@@ -12,10 +14,10 @@ import { useAIState } from 'ai/rsc'
 import { AIState } from '@/lib/chat/actions'
 
 interface FileUploadButtonProps {
-  chatId?: string
+  userId?: string
 }
 
-export function FileUploadButton({ chatId }: FileUploadButtonProps) {
+export function FileUploadButton({ userId }: FileUploadButtonProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [aiState] = useAIState() as [AIState, unknown]
 
@@ -31,9 +33,10 @@ export function FileUploadButton({ chatId }: FileUploadButtonProps) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          chatId,
+          chatId: aiState.chatId,
           fileName: file.name,
-          fileContents: await file.text()
+          fileContents: await file.text(),
+          userId
         })
       })
       toast.success(`File ${file.name} uploaded successfully`)
@@ -42,32 +45,30 @@ export function FileUploadButton({ chatId }: FileUploadButtonProps) {
 
   return (
     <>
-      {chatId && (
-        <>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-                onClick={() => {
-                  fileInputRef.current?.click()
-                }}
-              >
-                <IconPlus />
-                <span className="sr-only">Upload File</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Upload File</TooltipContent>
-          </Tooltip>
-        </>
-      )}
+      <>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+              onClick={() => {
+                fileInputRef.current?.click()
+              }}
+            >
+              <IconPlus />
+              <span className="sr-only">Upload File</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Upload File</TooltipContent>
+        </Tooltip>
+      </>
     </>
   )
 }

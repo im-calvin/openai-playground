@@ -54,6 +54,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
         session={session}
         initialMessages={chat.messages}
         missingKeys={missingKeys}
+        userId={userId}
       />
     </AI>
   )

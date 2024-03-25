@@ -35,3 +35,9 @@ export interface User extends Record<string, any> {
   password: string
   salt: string
 }
+
+export interface File {
+  id: string
+  name: string
+  contents: string
+}

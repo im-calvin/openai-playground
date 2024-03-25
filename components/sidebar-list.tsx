@@ -1,11 +1,9 @@
-'use client'
-
 import { clearChats, getChats } from '@/app/actions'
 import { ClearHistory } from '@/components/clear-history'
 import { SidebarItems } from '@/components/sidebar-items'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cache } from 'react'
-import { FileUploadButton } from '@/components/file-upload-button'
+import { UploadedFiles } from '@/components/uploaded-files'
 
 interface SidebarListProps {
   userId?: string
@@ -32,9 +30,10 @@ export async function SidebarList({ userId }: SidebarListProps) {
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between p-4">
-        <h4 className="text-sm font-medium">Files Uploaded</h4>
-        <FileUploadButton chatId={aiState.chatId} />
+      <div className="flex flex-[0.33] items-start border-t p-4">
+        <div className="flex-1">
+          <UploadedFiles userId={userId} />
+        </div>
       </div>
       <div className="flex items-center justify-between p-4">
         <ThemeToggle />

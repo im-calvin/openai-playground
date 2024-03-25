@@ -11,7 +11,6 @@ import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
 import { UserMessage } from './stocks/message'
-import { FileUploadButton } from '@/components/file-upload-button'
 
 export interface ChatPanelProps {
   id?: string
@@ -20,6 +19,7 @@ export interface ChatPanelProps {
   setInput: (value: string) => void
   isAtBottom: boolean
   scrollToBottom: () => void
+  userId?: string
 }
 
 export function ChatPanel({
@@ -28,7 +28,8 @@ export function ChatPanel({
   input,
   setInput,
   isAtBottom,
-  scrollToBottom
+  scrollToBottom,
+  userId
 }: ChatPanelProps) {
   const [aiState] = useAIState()
   const [messages, setMessages] = useUIState<typeof AI>()
@@ -131,7 +132,12 @@ export function ChatPanel({
         ) : null}
 
         <div className="space-y-4 border-t bg-background px-4 py-2 shadow-lg sm:rounded-t-xl sm:border md:py-4">
-          <PromptForm input={input} setInput={setInput} id={id} />
+          <PromptForm
+            input={input}
+            setInput={setInput}
+            id={id}
+            userId={userId}
+          />
           <FooterText className="hidden sm:block" />
         </div>
       </div>

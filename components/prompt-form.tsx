@@ -17,19 +17,21 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { FileUploadButton } from '@/components/file-upload-button'
+import { useParams } from 'next/navigation'
 
 export function PromptForm({
   input,
   setInput,
-  id
+  id,
+  userId
 }: {
   input: string
   setInput: (value: string) => void
   id?: string
+  userId?: string
 }) {
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
@@ -69,7 +71,7 @@ export function PromptForm({
       }}
     >
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
-        <FileUploadButton chatId={id} />
+        {userId && <FileUploadButton userId={userId} />}
         <Textarea
           ref={inputRef}
           tabIndex={0}

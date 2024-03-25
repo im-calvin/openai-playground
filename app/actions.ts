@@ -5,7 +5,24 @@ import { redirect } from 'next/navigation'
 import { kv } from '@vercel/kv'
 
 import { auth } from '@/auth'
-import { type Chat } from '@/lib/types'
+import { type Chat, type File } from '@/lib/types'
+
+export async function getUploadedFiles(userId: string): Promise<File[]> {
+  const fileHash = await kv.hgetall(`user:${userId}:files`)
+  if (!fileHash) {
+    throw new Error('No files found for the user.')
+  }
+  // Convert the hash into an array of File objects
+  const files: File[] = Object.entries(fileHash).map(([fileKey, fileValue]) => {
+    const file = fileValue as File
+    return {
+      id: file.id,
+      name: file.name,
+      contents: file.contents
+    }
+  })
+  return files
+}
 
 export async function getChats(userId?: string | null) {
   if (!userId) {
