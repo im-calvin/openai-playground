@@ -19,7 +19,7 @@ export interface ChatPanelProps {
   setInput: (value: string) => void
   isAtBottom: boolean
   scrollToBottom: () => void
-  userId?: string
+  userId: string
 }
 
 export function ChatPanel({
@@ -85,7 +85,8 @@ export function ChatPanel({
                   ])
 
                   const responseMessage = await submitUserMessage(
-                    example.message
+                    example.message,
+                    userId
                   )
 
                   setMessages(currentMessages => [

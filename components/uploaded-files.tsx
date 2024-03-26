@@ -21,13 +21,11 @@ export function UploadedFiles({ userId }: UploadedFilesProps) {
   useEffect(() => {
     async function fetchFiles() {
       if (userId) {
-        console.log('fetching files')
         const files = await getUploadedFiles(userId)
         setUploadedFiles(files)
         setRefetchFiles(false)
       }
     }
-
     fetchFiles()
   }, [userId, refetchFiles])
 
@@ -83,10 +81,11 @@ export function UploadedFiles({ userId }: UploadedFilesProps) {
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="ghost"
-                    size="icon"
                     onClick={() => handleFileTrash(file.id)}
+                    className="size-7 p-0 hover:bg-background"
                   >
                     <IconTrash />
+                    <span className="sr-only">Delete</span>
                   </Button>
                   <Checkbox
                     checked={file.selected}

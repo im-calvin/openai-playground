@@ -19,7 +19,8 @@ export async function POST(req: Request): Promise<Response> {
       [fileKey]: {
         id: fileKey,
         name: fileName,
-        contents: fileContents
+        contents: fileContents,
+        selected: false
       }
     })
 

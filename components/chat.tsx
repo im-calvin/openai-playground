@@ -18,21 +18,19 @@ export interface ChatProps extends React.ComponentProps<'div'> {
   id?: string
   session?: Session
   missingKeys: string[]
-  userId?: string
 }
 
-export function Chat({
-  id,
-  className,
-  session,
-  missingKeys,
-  userId
-}: ChatProps) {
+export function Chat({ id, className, session, missingKeys }: ChatProps) {
   const router = useRouter()
   const path = usePathname()
   const [input, setInput] = useState('')
   const [messages] = useUIState()
   const [aiState] = useAIState()
+  const [userId, setUserId] = useState<string>(session?.user.id as string)
+
+  useEffect(() => {
+    setUserId(session?.user.id as string)
+  }, [session?.user.id])
 
   const [_, setNewChatId] = useLocalStorage('newChatId', id)
 

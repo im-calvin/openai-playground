@@ -54,6 +54,7 @@ export async function insertFileIntoSandbox(
 ) {
   const sandbox = await Sandbox.reconnect(sandboxId)
   await sandbox.filesystem.write(fileName, fileContents)
+  console.log(`writing file ${fileName} to sandbox ${sandboxId}`)
 }
 
 // TODO implement a cleanup function

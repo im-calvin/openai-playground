@@ -27,13 +27,12 @@ export function PromptForm({
   input: string
   setInput: (value: string) => void
   id?: string
-  userId?: string
+  userId: string
 }) {
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
