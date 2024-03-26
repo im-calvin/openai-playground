@@ -10,7 +10,8 @@ import { type Chat, type File } from '@/lib/types'
 export async function getUploadedFiles(userId: string): Promise<File[]> {
   const fileHash = await kv.hgetall(`user:${userId}:files`)
   if (!fileHash) {
-    throw new Error('No files found for the user.')
+    // 'No files found for the user.'
+    return []
   }
   // Convert the hash into an array of File objects
   const files: File[] = Object.entries(fileHash).map(([fileKey, fileValue]) => {

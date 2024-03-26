@@ -6,6 +6,9 @@ import { File } from '@/lib/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUploadedFilesContext } from '@/lib/file-upload-context'
 import { FileUploadButton } from '@/components/file-upload-button'
+import { IconTrash } from '@/components/ui/icons'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface UploadedFilesProps {
   userId?: string
@@ -44,10 +47,29 @@ export function UploadedFiles({ userId }: UploadedFilesProps) {
     setUploadedFiles(updatedFiles)
   }
 
+  const handleFileTrash = async (fileId: string) => {
+    const file = uploadedFiles.find(file => file.id === fileId)
+    if (file) {
+      await fetch(`/api/user/deleteFile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileId
+        })
+      })
+      setRefetchFiles(true)
+      toast.success('File deleted successfully')
+    }
+  }
+
   return (
-    <div>
-      <h4 className="text-md font-medium">Files Uploaded</h4>
-      {userId && <FileUploadButton userId={userId} />}
+    <div className="relative">
+      <div className="flex items-center justify-between p-2">
+        <h4 className="text-sm font-medium">Files Uploaded</h4>
+        {userId && <FileUploadButton userId={userId} />}
+      </div>
       <Suspense fallback={<div>Loading files...</div>}>
         {uploadedFiles.length > 0 ? (
           <ul>
@@ -57,10 +79,20 @@ export function UploadedFiles({ userId }: UploadedFilesProps) {
                 className="flex items-center justify-between py-2"
               >
                 <span>{file.name}</span>
-                <Checkbox
-                  checked={file.selected}
-                  onCheckedChange={() => handleFileSelect(file.id)}
-                />
+                <div className="flex-grow" />
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleFileTrash(file.id)}
+                  >
+                    <IconTrash />
+                  </Button>
+                  <Checkbox
+                    checked={file.selected}
+                    onCheckedChange={() => handleFileSelect(file.id)}
+                  />
+                </div>
               </li>
             ))}
           </ul>

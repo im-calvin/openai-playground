@@ -14,9 +14,13 @@ import { useUploadedFilesContext } from '@/lib/file-upload-context'
 
 interface FileUploadButtonProps {
   userId?: string
+  absolute?: boolean
 }
 
-export function FileUploadButton({ userId }: FileUploadButtonProps) {
+export function FileUploadButton({
+  userId,
+  absolute = false
+}: FileUploadButtonProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const { addUploadedFile, setRefetchFiles } = useUploadedFilesContext()
 
@@ -57,7 +61,7 @@ export function FileUploadButton({ userId }: FileUploadButtonProps) {
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+            className={`${absolute ? 'absolute left-0 top-[14px] sm:left-4' : ''} size-8 rounded-full bg-background p-0`}
             onClick={() => {
               fileInputRef.current?.click()
             }}
