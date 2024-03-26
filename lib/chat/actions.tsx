@@ -128,18 +128,30 @@ async function submitUserMessage(content: string, userId: string) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
-  const files = await getUploadedFiles(userId)
+  const allFiles = await getUploadedFiles(userId)
+  const files = allFiles.filter(file => file.selected)
   const sandboxId = await initSandbox(aiState.get().chatId)
   await Promise.all(
     files.map(file =>
       insertFileIntoSandbox(sandboxId, file.name, file.contents)
     )
   )
+  // add a system prompt that tells gpt that there is a file called file.name in the sandbox that it can use if needed
+  const filePrompts: Message[] = files.map(file => {
+    return {
+      id: file.id,
+      content: `There is a file called ${file.name} in the sandbox.`,
+      role: 'system'
+    }
+  })
+
+  console.log(filePrompts)
 
   aiState.update({
     ...aiState.get(),
     messages: [
       ...aiState.get().messages,
+      ...filePrompts,
       {
         id: nanoid(),
         role: 'user',
@@ -207,23 +219,33 @@ async function submitUserMessage(content: string, userId: string) {
           })
           .required(),
         render: async function* ({ code }) {
-          yield (
-            // what to render while waiting for the code
-            <BotCard>
-              <SystemMessage>Executing code...</SystemMessage>
-            </BotCard>
-          )
-
-          // TODO stream the output of execPython
           if (!textStream) {
             textStream = createStreamableValue('')
           }
+
+          yield (
+            // what to render while waiting for the code
+            <>
+              <BotCard>
+                <SystemMessage>Executing code...</SystemMessage>
+              </BotCard>
+              <BotCard>
+                <CodeBlock language="python" value={code} />
+              </BotCard>
+              <Separator className="my-4" />
+              <BotCard>
+                <BotMessage content={textStream.value} />
+              </BotCard>
+            </>
+          )
 
           const { stdout, stderr } = await executePythonCode(
             code,
             sandboxId,
             textStream
           )
+
+          textStream.done()
 
           aiState.done({
             ...aiState.get(),
@@ -251,7 +273,9 @@ async function submitUserMessage(content: string, userId: string) {
                 <CodeBlock language="python" value={code} />
               </BotCard>
               <Separator className="my-4" />
-              <BotCard>{stdout}</BotCard>
+              <BotCard>
+                <BotMessage content={textStream.value} />
+              </BotCard>
             </>
           )
         }

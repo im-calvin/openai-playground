@@ -65,7 +65,10 @@ export async function executePythonCode(
   textStream: ReturnType<typeof createStreamableValue<string>>
 ): Promise<{ stdout: string[]; stderr: string[] }> {
   const sandbox = await CodeInterpreterV2.reconnect(sandboxId)
-  const result = await sandbox.execPython(code) // the code has to 'print' something
+  const result = await sandbox.execPython(code, out => {
+    textStream.update(textStream.value.curr + out.line + '\n')
+    console.log('stdout:', out.line)
+  }) // the code has to 'print' something
   // TODO: stream the output of the execPython
   // maybe the solution is to call aiState.update()
   // or https://sdk.vercel.ai/docs/guides/providers/openai-functions
