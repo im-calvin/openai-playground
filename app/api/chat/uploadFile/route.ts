@@ -13,7 +13,7 @@ export async function POST(req: Request): Promise<Response> {
 
     // Retrieve the file contents from the user's uploaded files
     const fileKey = `user:${userId}:files:${fileName}`
-    const fileData = await kv.hget<{ contents: string }>(
+    const fileData = await kv.hget<{ contents: string }>( // base64 encoded string
       `user:${userId}:files`,
       fileKey
     )

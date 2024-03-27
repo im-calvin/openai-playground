@@ -22,7 +22,7 @@ export function FileUploadButton({
   absolute = false
 }: FileUploadButtonProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const { addUploadedFile, setRefetchFiles } = useUploadedFilesContext()
+  const { setRefetchFiles } = useUploadedFilesContext()
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -30,17 +30,12 @@ export function FileUploadButton({
     const files = event.target.files
     if (files && files.length > 0) {
       const file = files[0]
-      const fileContents = await file.text()
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('userId', userId || '')
       const json = await fetcher('/api/user/uploadFile', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileContents,
-          userId
-        })
+        body: formData
       })
       toast.success(`File ${file.name} uploaded successfully`)
 

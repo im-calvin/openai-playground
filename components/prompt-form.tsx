@@ -17,6 +17,7 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { FileUploadButton } from '@/components/file-upload-button'
+import { useUploadedFilesContext } from '@/lib/file-upload-context'
 
 export function PromptForm({
   input,
@@ -29,6 +30,8 @@ export function PromptForm({
   id?: string
   userId: string
 }) {
+  const { uploadedFiles } = useUploadedFilesContext()
+
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
@@ -64,7 +67,7 @@ export function PromptForm({
         ])
 
         // Submit and get response message
-        const responseMessage = await submitUserMessage(value, userId)
+        const responseMessage = await submitUserMessage(value, uploadedFiles)
         setMessages(currentMessages => [...currentMessages, responseMessage])
       }}
     >

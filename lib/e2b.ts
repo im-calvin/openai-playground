@@ -50,10 +50,21 @@ export async function initSandbox(chatId: string): Promise<string> {
 export async function insertFileIntoSandbox(
   sandboxId: string,
   fileName: string,
-  fileContents: string
+  fileContents: string // base64 encoded string
 ) {
   const sandbox = await Sandbox.reconnect(sandboxId)
-  await sandbox.filesystem.write(fileName, fileContents)
+  const cwd = sandbox.cwd
+  // don't reupload the file if the file is already in the sandbox
+  const files = await sandbox.filesystem.list(cwd || '/home/user') // default cwd is '/home/user' https://e2b.dev/docs/sandbox/api/cwd
+  if (fileName in files.map(f => f.name)) {
+    console.log(`File ${fileName} already exists in sandbox ${sandboxId}`)
+    return
+  }
+  // convert base64 string to blob
+  const fileContentsBlob = new Blob([Buffer.from(fileContents, 'base64')], {
+    type: 'application/octet-stream'
+  })
+  await sandbox.uploadFile(fileContentsBlob, fileName)
   console.log(`writing file ${fileName} to sandbox ${sandboxId}`)
 }
 
@@ -67,7 +78,6 @@ export async function executePythonCode(
   const sandbox = await CodeInterpreterV2.reconnect(sandboxId)
   const result = await sandbox.execPython(code, out => {
     textStream.update(textStream.value.curr + out.line + '\n')
-    console.log('stdout:', out.line)
   }) // the code has to 'print' something
   // TODO: stream the output of the execPython
   // maybe the solution is to call aiState.update()

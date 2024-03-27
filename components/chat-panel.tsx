@@ -11,6 +11,7 @@ import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
 import { UserMessage } from './stocks/message'
+import { useUploadedFilesContext } from '@/lib/file-upload-context'
 
 export interface ChatPanelProps {
   id?: string
@@ -31,6 +32,8 @@ export function ChatPanel({
   scrollToBottom,
   userId
 }: ChatPanelProps) {
+  const { uploadedFiles } = useUploadedFilesContext()
+
   const [aiState] = useAIState()
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage } = useActions()
@@ -86,7 +89,7 @@ export function ChatPanel({
 
                   const responseMessage = await submitUserMessage(
                     example.message,
-                    userId
+                    uploadedFiles
                   )
 
                   setMessages(currentMessages => [

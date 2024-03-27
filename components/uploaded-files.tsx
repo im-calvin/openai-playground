@@ -77,7 +77,7 @@ export function UploadedFiles({ userId }: UploadedFilesProps) {
                 className="flex items-center justify-between py-2"
               >
                 <span>{file.name}</span>
-                <div className="flex-grow" />
+                <div className="grow" />
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="ghost"

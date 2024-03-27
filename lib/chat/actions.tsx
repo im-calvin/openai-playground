@@ -38,6 +38,7 @@ import {
   insertFileIntoSandbox
 } from '@/lib/e2b'
 import { CodeBlock } from '@/components/ui/codeblock'
+import { File } from '@/lib/types'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -124,20 +125,19 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string, userId: string) {
+async function submitUserMessage(content: string, files: File[]) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
-  const allFiles = await getUploadedFiles(userId)
-  const files = allFiles.filter(file => file.selected)
+  const selectedFiles = files.filter(file => file.selected)
   const sandboxId = await initSandbox(aiState.get().chatId)
   await Promise.all(
-    files.map(file =>
+    selectedFiles.map(file =>
       insertFileIntoSandbox(sandboxId, file.name, file.contents)
     )
   )
   // add a system prompt that tells gpt that there is a file called file.name in the sandbox that it can use if needed
-  const filePrompts: Message[] = files.map(file => {
+  const filePrompts: Message[] = selectedFiles.map(file => {
     return {
       id: file.id,
       content: `There is a file called ${file.name} in the sandbox.`,
@@ -145,7 +145,7 @@ async function submitUserMessage(content: string, userId: string) {
     }
   })
 
-  console.log(filePrompts)
+  console.log('filePrompts: ', filePrompts)
 
   aiState.update({
     ...aiState.get(),
@@ -227,9 +227,6 @@ async function submitUserMessage(content: string, userId: string) {
             // what to render while waiting for the code
             <>
               <BotCard>
-                <SystemMessage>Executing code...</SystemMessage>
-              </BotCard>
-              <BotCard>
                 <CodeBlock language="python" value={code} />
               </BotCard>
               <Separator className="my-4" />
@@ -239,32 +236,39 @@ async function submitUserMessage(content: string, userId: string) {
             </>
           )
 
+          // updates textStream
           const { stdout, stderr } = await executePythonCode(
             code,
             sandboxId,
             textStream
           )
+          console.log(stdout, textStream.value)
 
-          textStream.done()
+          if (stdout || stderr) {
+            textStream.done()
 
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'function',
-                name: 'codeExecuted',
-                content: JSON.stringify({ code })
-              },
-              {
-                id: nanoid(),
-                role: 'function',
-                name: 'codeOutput',
-                content: JSON.stringify({ stdout, stderr })
-              }
-            ]
-          })
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  id: nanoid(),
+                  role: 'function',
+                  name: 'codeExecuted',
+                  content: JSON.stringify({ code })
+                },
+                {
+                  id: nanoid(),
+                  role: 'function',
+                  name: 'codeOutput',
+                  content: JSON.stringify({
+                    stdout: stdout || 'No output',
+                    stderr
+                  })
+                }
+              ]
+            })
+          }
 
           // what to render when the tool is done
           return (
