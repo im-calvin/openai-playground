@@ -227,11 +227,7 @@ async function submitUserMessage(content: string, files: File[]) {
             // what to render while waiting for the code
             <>
               <BotCard>
-                <CodeBlock language="python" value={code} />
-              </BotCard>
-              <Separator className="my-4" />
-              <BotCard>
-                <BotMessage content={textStream.value} />
+                <BotMessage content={'Executing code...'} />
               </BotCard>
             </>
           )
@@ -242,7 +238,6 @@ async function submitUserMessage(content: string, files: File[]) {
             sandboxId,
             textStream
           )
-          console.log(stdout, textStream.value)
 
           if (stdout || stderr) {
             textStream.done()
@@ -254,14 +249,9 @@ async function submitUserMessage(content: string, files: File[]) {
                 {
                   id: nanoid(),
                   role: 'function',
-                  name: 'codeExecuted',
-                  content: JSON.stringify({ code })
-                },
-                {
-                  id: nanoid(),
-                  role: 'function',
                   name: 'codeOutput',
                   content: JSON.stringify({
+                    code,
                     stdout: stdout || 'No output',
                     stderr
                   })
@@ -275,10 +265,8 @@ async function submitUserMessage(content: string, files: File[]) {
             <>
               <BotCard>
                 <CodeBlock language="python" value={code} />
-              </BotCard>
-              <Separator className="my-4" />
-              <BotCard>
-                <BotMessage content={textStream.value} />
+                <Separator className="my-2" />
+                <CodeBlock language="output" value={textStream.value.curr!} />
               </BotCard>
             </>
           )
@@ -372,15 +360,19 @@ export const getUIStateFromAIState = (aiState: Chat) => {
       id: `${aiState.chatId}-${index}`,
       display:
         message.role === 'function' ? (
-          message.name === 'codeExecuted' ? (
+          message.name === 'codeOutput' ? (
             <BotCard>
-              <CodeBlock
-                language="python"
-                value={JSON.parse(message.content).code}
-              />
+              {(() => {
+                const parsedContent = JSON.parse(message.content)
+                return (
+                  <>
+                    <CodeBlock language="python" value={parsedContent.code} />
+                    <Separator className="my-2" />
+                    <CodeBlock language="output" value={parsedContent.stdout} />
+                  </>
+                )
+              })()}
             </BotCard>
-          ) : message.name === 'codeOutput' ? (
-            <BotCard>{JSON.parse(message.content).stdout}</BotCard>
           ) : null
         ) : message.role === 'user' ? (
           <UserMessage>{message.content}</UserMessage>
